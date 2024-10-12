@@ -295,9 +295,12 @@
                 const mushroomImg = loadMushroomFrame(mushroom);
                 offscreenCtx.drawImage(mushroomImg, mushroom.x, mushroom.y, mushroom.width, mushroom.height);
 
-                // Check for collision
-                if (soso.x < mushroom.x + mushroom.width && soso.x + soso.width > mushroom.x &&
-                    soso.y < mushroom.y + mushroom.height && soso.y + soso.height > mushroom.y) {
+                // Check for forgiving collision detection
+                const padding = -20; // Allow a 20-pixel padding for collision
+                if (soso.x < mushroom.x + mushroom.width + padding && 
+                    soso.x + soso.width > mushroom.x - padding &&
+                    soso.y < mushroom.y + mushroom.height + padding && 
+                    soso.y + soso.height > mushroom.y - padding) {
                     endGame();
                 }
 
