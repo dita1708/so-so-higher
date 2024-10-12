@@ -40,44 +40,18 @@
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            width: 20vw; /* Responsive size based on viewport */
-            height: 12vw;
+            width: 60vw; /* Responsive size based on viewport */
+            height: 100vw;
             background: url('restart.png') no-repeat center center;
             background-size: contain;
             cursor: pointer;
         }
 
-        /* Media query for landscape orientation */
-        @media screen and (orientation: landscape) {
-            body {
-                flex-direction: row; /* Align items horizontally */
-            }
-
-            #container {
-                width: 100vw;
-                height: 100vh;
-            }
-
-            canvas {
-                width: 100%; /* Full width in landscape mode */
-                height: 100%;
-            }
+        @font-face {
+            font-family: 'Bitblox';
+            src: url('BitBlox_Monospaced.woff') format('woff');
+            src: url('BitBlox_Monospaced.otf') format('opentype');
         }
-
-        /* Hide game container in portrait mode */
-        @media screen and (orientation: portrait) {
-            #container {
-                display: none; /* Hide the game canvas in portrait mode */
-            }
-        }
-        
-          @font-face {
-        font-family: 'Bitblox';
-  
-        src: url('BitBlox_Monospaced.woff') format('woff');
-        src: url('BitBlox_Monospaced.otf') format('opentype');
-        }
-        
     </style>
 </head>
 <body>
@@ -171,8 +145,8 @@
         let soso = { 
             x: 40, 
             y: canvas.height - 120, // Increase Y position to make Soso larger
-            width: 115,  // Increased size
-            height: 198, // Increased size
+            width: 100,  // Increased size
+            height: 155, // Increased size
             velocityY: 0, 
             jumping: false,
             frameIndex: 0,  
@@ -207,8 +181,8 @@
                 soso.jumping = true;
                 jumpSound.currentTime = 0;
                 jumpSound.play();
-            } else if (soso.jumping && soso.y >= canvas.height - 200) {
-                soso.velocityY = -20;
+            } else if (soso.jumping && soso.y >= canvas.height - 1000) {
+                soso.velocityY = -30;
                 jumpSound.currentTime = 0;
                 jumpSound.play();
             }
@@ -235,9 +209,9 @@
         function generateMushrooms() {
             const mushroom = { 
                 x: canvas.width, 
-                y: canvas.height - 90, // Increase Y position to make mushrooms larger
-                width: 46,  // Increased size
-                height: 48, // Increased size
+                y: canvas.height - 120, // Increase Y position to make mushrooms larger
+                width: 41,  // Increased size
+                height: 43, // Increased size
                 color: lastMushroomColor,  
                 frameIndex: 0,  
                 frameSpeed: 30, 
@@ -284,8 +258,8 @@
             soso.velocityY += gravity;
 
             // Prevent Soso from falling off the bottom
-            if (soso.y > canvas.height - soso.height - 38) {
-                soso.y = canvas.height - soso.height - 38;  
+            if (soso.y > canvas.height - soso.height - 75) {
+                soso.y = canvas.height - soso.height - 75;  
                 soso.jumping = false;
             }
 
@@ -342,15 +316,14 @@
             restartBtn.style.display = 'block';  
         }
 
-        // Check device orientation
+        // Ensure the game only runs in portrait mode
         const checkOrientation = () => {
             if (window.innerHeight > window.innerWidth) {
-                // Hide the game container
-                document.getElementById('container').style.display = 'none';
-                // Show the canvas rotated
-                document.body.style.transform = 'rotate(90deg)';
-            } else {
                 document.getElementById('container').style.display = 'flex'; // Show game container
+            } else {
+                // Show a message or hide the game container if not in portrait
+                document.getElementById('container').style.display = 'none'; 
+                alert("Please rotate your device to portrait mode.");
             }
         };
 
