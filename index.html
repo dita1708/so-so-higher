@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Use the space bar!</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+        }
+
+        /* Game Container */
+        #container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 0px solid black;
+            width: 25cm; 
+            height: 20cm; 
+            padding: 0px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Canvas */
+        canvas {
+            display: block;
+            width: 100%;  /* Ensures canvas fits inside container */
+            height: 100%; /* Matches container dimensions */
+        }
+
+        /* Restart Button */
+        #restart-btn {
+            display: none;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 80mm;
+            height: 50mm;
+            background: url('restart.png') no-repeat;
+            background-size: contain;
+        }
+               @font-face {
+        font-family: 'Bitblox';
+  
+        src: url('BitBlox_Monospaced.woff') format('woff');
+        src: url('BitBlox_Monospaced.otf') format('opentype');
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="gameCanvas" width="330mm" height="250mm"></canvas>
+    </div>
+    <div id="restart-btn"></div>
+
+    <audio id="jump-sound" src="jump.mp3"></audio>
+
+    <script>
+        // Load background frames
+        const bgFrames = [
+            'bg-01.png',
+            'bg-02.png',
+            'bg-03.png',
+            'bg-04.png',
+            'bg-05.png',
+            'bg-06.png',
+            'bg-07.png',
+            'bg-08.png',
+            'bg-09.png',
+            'bg-10.png',
+            'bg-11.png',
+            'bg-12.png',
+            'bg-13.png',
+            'bg-14.png',
+            'bg-15.png',
+            'bg-16.png',
+            'bg-17.png'
+        ];
+
+        let bgImg = []; // Array to store background images
+        let bgIndex = 0; // Current index for background frames
+        let bgSpeed = 5; // Speed of background frame transition (adjust this value manually)
+        let bgFrameCounter = 0; // Counter for background frame change
+
+        // Preload background images
+        const preloadBackgroundImages = () => {
+            return new Promise((resolve) => {
+                let loadedImages = 0;
+                bgFrames.forEach((src) => {
+                    const img = new Image();
+                    img.src = src;
+                    img.onload = () => {
+                        loadedImages++;
+                        bgImg.push(img); // Store loaded image
+                        if (loadedImages === bgFrames.length) {
+                            resolve();
+                        }
+                    };
+                });
+            });
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const jumpSound = document.getElementById('jump-sound');
+        const restartBtn = document.getElementById('restart-btn');
+
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+
+        // Load SO-SO frames for sprite animation
+        const sosoFrames = [
+            'soso-1.png',
+            'soso-2.png',
+            'soso-3.png',
+            'soso-4.png'
+        ];
+
+        // Load Red Mushroom frames for sprite animation
+        const redMushroomFrames = [
+            'red-1.png',
+            'red-2.png'
+        ];
+
+        // Load Blue Mushroom frames for sprite animation
+        const blueMushroomFrames = [
+            'blue-1.png',
+            'blue-2.png'
+        ];
+
+        // Game variables
+        let soso = { 
+            x: 40, 
+            y: canvasHeight - 90,  
+            width: 57.5, 
+            height: 99, 
+            velocityY: 0, 
+            jumping: false,
+            frameIndex: 0,  
+            frameSpeed: 4,  
+            frameCounter: 0 
+        };
+
+        let mushrooms = [];
+        let score = 0;
+        let gameOver = false;
+        let gravity = 0.8;
+        let mushroomSpeed = 3;
+        const minDistance = 150; 
+        let lastMushroomColor = 'red';  
+
+        function loadSosoFrame() {
+            const img = new Image();
+            img.src = sosoFrames[soso.frameIndex];
+            return img;
+        }
+
+        function loadMushroomFrame(mushroom) {
+            const mushroomFrames = mushroom.color === 'red' ? redMushroomFrames : blueMushroomFrames;
+            const mushroomImg = new Image();
+            mushroomImg.src = mushroomFrames[mushroom.frameIndex];
+            return mushroomImg;
+        }
+
+        function jump() {
+            if (!soso.jumping) {
+                soso.velocityY = -12;
+                soso.jumping = true;
+                jumpSound.currentTime = 0;
+                jumpSound.play();
+            } else if (soso.jumping && soso.y >= canvasHeight - 150) {
+                soso.velocityY = -20;
+                jumpSound.currentTime = 0;
+                jumpSound.play();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !gameOver) {
+                jump();
+            }
+            if (e.code === 'Enter' && gameOver) {
+                restartGame(); 
+            }
+        });
+        
+
+document.addEventListener('click', () => {
+    if (gameOver) {
+        restartGame();
+    
+       } else {
+        jump(); 
+    }
+});
+
+        function generateMushrooms() {
+            const mushroom = { 
+                x: canvasWidth, 
+                y: canvasHeight - 54,  
+                width: 23, 
+                height: 24,
+                color: lastMushroomColor,  
+                frameIndex: 0,  
+                frameSpeed: 30, 
+                frameCounter: 0 
+            };
+
+            if (mushrooms.length === 0 || (canvasWidth - mushrooms[mushrooms.length - 1].x >= minDistance)) {
+                mushrooms.push(mushroom);
+                lastMushroomColor = lastMushroomColor === 'red' ? 'blue' : 'red';
+            }
+
+            setTimeout(generateMushrooms, 2000);  
+        }
+
+        function restartGame() {
+            gameOver = false;
+            score = 0;
+            mushrooms = [];
+            soso.x = 40;
+            soso.y = canvasHeight - 90;
+            soso.velocityY = 0;
+            soso.jumping = false;
+            soso.frameIndex = 0;
+            soso.frameCounter = 0;
+            restartBtn.style.display = 'none';
+            generateMushrooms();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameLoop() {
+            if (gameOver) return;
+
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // Update background frame based on bgSpeed
+            if (bgFrameCounter % bgSpeed === 0) {
+                bgIndex = (bgIndex + 1) % bgImg.length;
+            }
+            bgFrameCounter++;
+
+            if (bgImg.length > 0) {
+                ctx.drawImage(bgImg[bgIndex], 0, 0, canvasWidth, canvasHeight);
+            }
+
+            soso.y += soso.velocityY;
+            soso.velocityY += gravity;
+
+            if (soso.y > canvasHeight - soso.height - 28) {
+                soso.y = canvasHeight - soso.height - 28;  
+                soso.jumping = false;
+            }
+
+            if (soso.frameCounter % soso.frameSpeed === 0) {
+                soso.frameIndex = (soso.frameIndex + 1) % sosoFrames.length;
+            }
+            soso.frameCounter++;
+
+            const sosoImg = loadSosoFrame();
+            ctx.drawImage(sosoImg, soso.x, soso.y, soso.width, soso.height);
+
+            for (let i = 0; i < mushrooms.length; i++) {
+                const mushroom = mushrooms[i];
+                mushroom.x -= mushroomSpeed;
+
+                if (mushroom.frameCounter % mushroom.frameSpeed === 0) {
+                    mushroom.frameIndex = (mushroom.frameIndex + 1) % 2;
+                }
+                mushroom.frameCounter++;
+
+                const mushroomImg = loadMushroomFrame(mushroom);
+                ctx.drawImage(mushroomImg, mushroom.x, mushroom.y, mushroom.width, mushroom.height);
+
+                if (soso.x < mushroom.x + mushroom.width && soso.x + soso.width > mushroom.x &&
+                    soso.y < mushroom.y + mushroom.height && soso.y + soso.height > mushroom.y) {
+                    endGame();
+                }
+
+                if (mushroom.x + mushroom.width < 0) {
+                    mushrooms.splice(i, 1);
+                    score += 50;
+                }
+            }
+
+            ctx.font = "16px BitBlox";  
+            ctx.fillStyle = "#fff";      
+            ctx.fillText(`SCORE - ${score.toString().padStart(6, '0')}`, 10, 20);
+
+            mushroomSpeed += 0.004;
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function endGame() {
+            gameOver = true;
+            restartBtn.style.display = 'block';  
+        }
+
+        preloadBackgroundImages().then(() => {
+            generateMushrooms();
+            requestAnimationFrame(gameLoop);
+        });
+
+        restartBtn.addEventListener('click', restartGame);
+        
+          // JavaScript to detect if the user is on a mobile device
+        document.addEventListener('DOMContentLoaded', function() {
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                // If the user is on a mobile device, redirect to m.html
+                window.location.href = 'm.html';
+            }
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Use the Space Bar!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Game Container */
+        #container {
+            position: relative;
+            width: 100vw; /* Full width of the viewport */
+            height: 100vh; /* Full height of the viewport */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Canvas */
+        canvas {
+            display: block;
+            width: 100%;  /* Ensure canvas fits in the container */
+            height: 100%; /* Ensures the canvas takes the full height of the container */
+        }
+
+        /* Restart Button */
+        #restart-btn {
+            display: none;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20vw; /* Responsive size based on viewport */
+            height: 12vw;
+            background: url('restart.png') no-repeat center center;
+            background-size: contain;
+            cursor: pointer;
+        }
+
+        /* Media query for landscape orientation */
+        @media screen and (orientation: landscape) {
+            body {
+                flex-direction: row; /* Align items horizontally */
+            }
+
+            #container {
+                width: 100vw;
+                height: 100vh;
+            }
+
+            canvas {
+                width: 100%; /* Full width in landscape mode */
+                height: 100%;
+            }
+        }
+
+        /* Hide game container in portrait mode */
+        @media screen and (orientation: portrait) {
+            #container {
+                display: none; /* Hide the game canvas in portrait mode */
+            }
+        }
+        
+          @font-face {
+        font-family: 'Bitblox';
+  
+        src: url('BitBlox_Monospaced.woff') format('woff');
+        src: url('BitBlox_Monospaced.otf') format('opentype');
+        }
+        
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="restart-btn"></div>
+    <audio id="jump-sound" src="jump.mp3"></audio>
+
+    <script>
+        // Load background frames
+        const bgFrames = [
+            'bg-01.png',
+            'bg-02.png',
+            'bg-03.png',
+            'bg-04.png',
+            'bg-05.png',
+            'bg-06.png',
+            'bg-07.png',
+            'bg-08.png',
+            'bg-09.png',
+            'bg-10.png',
+            'bg-11.png',
+            'bg-12.png',
+            'bg-13.png',
+            'bg-14.png',
+            'bg-15.png',
+            'bg-16.png',
+            'bg-17.png'
+        ];
+
+        let bgImg = []; // Array to store background images
+        let bgIndex = 0; // Current index for background frames
+        let bgSpeed = 5; // Speed of background frame transition (adjust this value manually)
+        let bgFrameCounter = 0; // Counter for background frame change
+
+        // Preload background images
+        const preloadBackgroundImages = () => {
+            return new Promise((resolve) => {
+                let loadedImages = 0;
+                bgFrames.forEach((src) => {
+                    const img = new Image();
+                    img.src = src;
+                    img.onload = () => {
+                        loadedImages++;
+                        bgImg.push(img); // Store loaded image
+                        if (loadedImages === bgFrames.length) {
+                            resolve();
+                        }
+                    };
+                });
+            });
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const jumpSound = document.getElementById('jump-sound');
+        const restartBtn = document.getElementById('restart-btn');
+
+        const resizeCanvas = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+
+        // Resize canvas to fit the screen
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas(); // Call it initially to set the size
+
+        // Load SO-SO frames for sprite animation
+        const sosoFrames = [
+            'soso-1.png',
+            'soso-2.png',
+            'soso-3.png',
+            'soso-4.png'
+        ];
+
+        // Load Red Mushroom frames for sprite animation
+        const redMushroomFrames = [
+            'red-1.png',
+            'red-2.png'
+        ];
+
+        // Load Blue Mushroom frames for sprite animation
+        const blueMushroomFrames = [
+            'blue-1.png',
+            'blue-2.png'
+        ];
+
+        // Game variables
+        let soso = { 
+            x: 40, 
+            y: canvas.height - 120, // Increase Y position to make Soso larger
+            width: 115,  // Increased size
+            height: 198, // Increased size
+            velocityY: 0, 
+            jumping: false,
+            frameIndex: 0,  
+            frameSpeed: 5,  
+            frameCounter: 0 
+        };
+
+        let mushrooms = [];
+        let score = 0;
+        let gameOver = false;
+        let gravity = 0.4;
+        let mushroomSpeed = 5;
+        const minDistance = 330; 
+        let lastMushroomColor = 'red';  
+
+        function loadSosoFrame() {
+            const img = new Image();
+            img.src = sosoFrames[soso.frameIndex];
+            return img;
+        }
+
+        function loadMushroomFrame(mushroom) {
+            const mushroomFrames = mushroom.color === 'red' ? redMushroomFrames : blueMushroomFrames;
+            const mushroomImg = new Image();
+            mushroomImg.src = mushroomFrames[mushroom.frameIndex];
+            return mushroomImg;
+        }
+
+        function jump() {
+            if (!soso.jumping) {
+                soso.velocityY = -12;
+                soso.jumping = true;
+                jumpSound.currentTime = 0;
+                jumpSound.play();
+            } else if (soso.jumping && soso.y >= canvas.height - 200) {
+                soso.velocityY = -20;
+                jumpSound.currentTime = 0;
+                jumpSound.play();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !gameOver) {
+                jump();
+            }
+            if (e.code === 'Enter' && gameOver) {
+                restartGame(); 
+            }
+        });
+
+        // Jump and restart game via click
+        document.addEventListener('click', () => {
+            if (gameOver) {
+                restartGame();
+            } else {
+                jump(); 
+            }
+        });
+
+        function generateMushrooms() {
+            const mushroom = { 
+                x: canvas.width, 
+                y: canvas.height - 90, // Increase Y position to make mushrooms larger
+                width: 46,  // Increased size
+                height: 48, // Increased size
+                color: lastMushroomColor,  
+                frameIndex: 0,  
+                frameSpeed: 30, 
+                frameCounter: 0 
+            };
+
+            if (mushrooms.length === 0 || (canvas.width - mushrooms[mushrooms.length - 1].x >= minDistance)) {
+                mushrooms.push(mushroom);
+                lastMushroomColor = lastMushroomColor === 'red' ? 'blue' : 'red';
+            }
+
+            setTimeout(generateMushrooms, 1000);  
+        }
+
+        function restartGame() {
+            gameOver = false;
+            score = 0;
+            mushrooms = [];
+            mushroomSpeed = 3;
+            soso.y = canvas.height - 120; // Reset position
+            requestAnimationFrame(gameLoop);
+            restartBtn.style.display = 'none';  
+        }
+
+        function gameLoop() {
+            if (gameOver) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Change background image
+            bgFrameCounter++;
+            if (bgFrameCounter >= bgSpeed) {
+                bgIndex = (bgIndex + 1) % bgImg.length;
+                bgFrameCounter = 0;
+            }
+
+            // Draw the background
+            if (bgImg[bgIndex]) {
+                ctx.drawImage(bgImg[bgIndex], 0, 0, canvas.width, canvas.height);
+            }
+
+            // Apply gravity
+            soso.y += soso.velocityY;
+            soso.velocityY += gravity;
+
+            // Prevent Soso from falling off the bottom
+            if (soso.y > canvas.height - soso.height - 38) {
+                soso.y = canvas.height - soso.height - 38;  
+                soso.jumping = false;
+            }
+
+            // Frame update for Soso
+            if (soso.frameCounter % soso.frameSpeed === 0) {
+                soso.frameIndex = (soso.frameIndex + 1) % sosoFrames.length;
+            }
+            soso.frameCounter++;
+
+            // Draw Soso
+            const sosoImg = loadSosoFrame();
+            ctx.drawImage(sosoImg, soso.x, soso.y, soso.width, soso.height);
+
+            // Update and draw mushrooms
+            for (let i = 0; i < mushrooms.length; i++) {
+                const mushroom = mushrooms[i];
+                mushroom.x -= mushroomSpeed;
+
+                // Update mushroom frame
+                if (mushroom.frameCounter % mushroom.frameSpeed === 0) {
+                    mushroom.frameIndex = (mushroom.frameIndex + 1) % 2;
+                }
+                mushroom.frameCounter++;
+
+                // Draw mushroom
+                const mushroomImg = loadMushroomFrame(mushroom);
+                ctx.drawImage(mushroomImg, mushroom.x, mushroom.y, mushroom.width, mushroom.height);
+
+                // Check for collision
+                if (soso.x < mushroom.x + mushroom.width && soso.x + soso.width > mushroom.x &&
+                    soso.y < mushroom.y + mushroom.height && soso.y + soso.height > mushroom.y) {
+                    endGame();
+                }
+
+                // Remove off-screen mushrooms and update score
+                if (mushroom.x + mushroom.width < 0) {
+                    mushrooms.splice(i, 1);
+                    score += 50;
+                }
+            }
+
+            // Draw score
+            ctx.font = "32px BitBlox"; // Increased score font size
+            ctx.fillStyle = "#fff";      
+            ctx.fillText(`SCORE - ${score.toString().padStart(6, '0')}`, 10, 40); // Adjusted y-position
+
+            mushroomSpeed += 0.004;
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function endGame() {
+            gameOver = true;
+            restartBtn.style.display = 'block';  
+        }
+
+        // Check device orientation
+        const checkOrientation = () => {
+            if (window.innerHeight > window.innerWidth) {
+                // Hide the game container
+                document.getElementById('container').style.display = 'none';
+                // Show the canvas rotated
+                document.body.style.transform = 'rotate(90deg)';
+            } else {
+                document.getElementById('container').style.display = 'flex'; // Show game container
+            }
+        };
+
+        window.addEventListener('resize', checkOrientation);
+        checkOrientation(); // Initial check
+
+        // Preload background images and start the game loop
+        preloadBackgroundImages().then(() => {
+            generateMushrooms();
+            requestAnimationFrame(gameLoop);
+        });
+
+        restartBtn.addEventListener('click', restartGame);
+    </script>
+</body>
+</html>
