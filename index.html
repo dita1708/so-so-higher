@@ -152,7 +152,7 @@
         let gameOver = false;
         let gravity = 0.8;
         let mushroomSpeed = 3;
-        const minDistance = 150; 
+        const minDistance = 170; 
         let lastMushroomColor = 'red';  
 
         function loadSosoFrame() {
@@ -191,14 +191,13 @@
         });
         
 
-document.addEventListener('click', () => {
-    if (gameOver) {
-        restartGame();
-    
-       } else {
-        jump(); 
-    }
-});
+        document.addEventListener('click', () => {
+            if (gameOver) {
+                restartGame();
+            } else {
+                jump(); 
+            }
+        });
 
         function generateMushrooms() {
             const mushroom = { 
@@ -278,8 +277,11 @@ document.addEventListener('click', () => {
                 const mushroomImg = loadMushroomFrame(mushroom);
                 ctx.drawImage(mushroomImg, mushroom.x, mushroom.y, mushroom.width, mushroom.height);
 
-                if (soso.x < mushroom.x + mushroom.width && soso.x + soso.width > mushroom.x &&
-                    soso.y < mushroom.y + mushroom.height && soso.y + soso.height > mushroom.y) {
+                // Adjusted collision detection for extra forgiveness
+                if (soso.x + 10 < mushroom.x + mushroom.width &&
+                    soso.x + soso.width - 10 > mushroom.x &&
+                    soso.y + 10 < mushroom.y + mushroom.height &&
+                    soso.y + soso.height - 10 > mushroom.y) {
                     endGame();
                 }
 
@@ -310,7 +312,7 @@ document.addEventListener('click', () => {
 
         restartBtn.addEventListener('click', restartGame);
         
-          // JavaScript to detect if the user is on a mobile device
+        // JavaScript to detect if the user is on a mobile device
         document.addEventListener('DOMContentLoaded', function() {
             if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
                 // If the user is on a mobile device, redirect to m.html
