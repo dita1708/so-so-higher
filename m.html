@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Use the Space Bar!</title>
+    <title>Tap the screen!</title>
     <style>
         body {
             margin: 0;
@@ -112,9 +112,15 @@
         const jumpSound = document.getElementById('jump-sound');
         const restartBtn = document.getElementById('restart-btn');
 
+        // Off-screen canvas for double buffering
+        const offscreenCanvas = document.createElement('canvas');
+        const offscreenCtx = offscreenCanvas.getContext('2d');
+
         const resizeCanvas = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            offscreenCanvas.width = canvas.width; // Resize off-screen canvas to match
+            offscreenCanvas.height = canvas.height;
         };
 
         // Resize canvas to fit the screen
@@ -239,7 +245,8 @@
         function gameLoop() {
             if (gameOver) return;
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Clear off-screen canvas
+            offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
 
             // Change background image
             bgFrameCounter++;
@@ -250,7 +257,7 @@
 
             // Draw the background
             if (bgImg[bgIndex]) {
-                ctx.drawImage(bgImg[bgIndex], 0, 0, canvas.width, canvas.height);
+                offscreenCtx.drawImage(bgImg[bgIndex], 0, 0, offscreenCanvas.width, offscreenCanvas.height);
             }
 
             // Apply gravity
@@ -271,7 +278,7 @@
 
             // Draw Soso
             const sosoImg = loadSosoFrame();
-            ctx.drawImage(sosoImg, soso.x, soso.y, soso.width, soso.height);
+            offscreenCtx.drawImage(sosoImg, soso.x, soso.y, soso.width, soso.height);
 
             // Update and draw mushrooms
             for (let i = 0; i < mushrooms.length; i++) {
@@ -286,7 +293,7 @@
 
                 // Draw mushroom
                 const mushroomImg = loadMushroomFrame(mushroom);
-                ctx.drawImage(mushroomImg, mushroom.x, mushroom.y, mushroom.width, mushroom.height);
+                offscreenCtx.drawImage(mushroomImg, mushroom.x, mushroom.y, mushroom.width, mushroom.height);
 
                 // Check for collision
                 if (soso.x < mushroom.x + mushroom.width && soso.x + soso.width > mushroom.x &&
@@ -302,11 +309,14 @@
             }
 
             // Draw score
-            ctx.font = "32px BitBlox"; // Increased score font size
-            ctx.fillStyle = "#fff";      
-            ctx.fillText(`SCORE - ${score.toString().padStart(6, '0')}`, 10, 40); // Adjusted y-position
+            offscreenCtx.font = "32px BitBlox"; // Increased score font size
+            offscreenCtx.fillStyle = "#fff";      
+            offscreenCtx.fillText(`SCORE - ${score.toString().padStart(6, '0')}`, 10, 40); // Adjusted y-position
 
             mushroomSpeed += 0.004;
+
+            // Transfer off-screen canvas to the visible canvas
+            ctx.drawImage(offscreenCanvas, 0, 0);
 
             requestAnimationFrame(gameLoop);
         }
