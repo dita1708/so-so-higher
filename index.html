@@ -85,7 +85,7 @@
 
         let bgImg = []; // Array to store background images
         let bgIndex = 0; // Current index for background frames
-        let bgSpeed = 5; // Speed of background frame transition (adjust this value manually)
+        let bgSpeed = 15; // Speed of background frame transition (adjust this value manually)
         let bgFrameCounter = 0; // Counter for background frame change
 
         // Preload background images
@@ -143,7 +143,7 @@
             velocityY: 0, 
             jumping: false,
             frameIndex: 0,  
-            frameSpeed: 4,  
+            frameSpeed: 10,  
             frameCounter: 0 
         };
 
@@ -208,7 +208,7 @@ document.addEventListener('click', () => {
                 height: 24,
                 color: lastMushroomColor,  
                 frameIndex: 0,  
-                frameSpeed: 30, 
+                frameSpeed: 40, 
                 frameCounter: 0 
             };
 
