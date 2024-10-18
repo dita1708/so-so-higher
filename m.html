@@ -146,6 +146,11 @@
             'blue-1.png',
             'blue-2.png'
         ];
+        // Load Green Mushroom frames for sprite animation
+        const greenMushroomFrames = [
+            'green-1.png',
+            'green-2.png'
+        ];
 
         // Game variables
         let soso = { 
@@ -174,12 +179,20 @@
             return img;
         }
 
-        function loadMushroomFrame(mushroom) {
-            const mushroomFrames = mushroom.color === 'red' ? redMushroomFrames : blueMushroomFrames;
+         function loadMushroomFrame(mushroom) {
+            let mushroomFrames;
+            if (mushroom.color === 'red') {
+                mushroomFrames = redMushroomFrames;
+            } else if (mushroom.color === 'blue') {
+                mushroomFrames = blueMushroomFrames;
+            } else {
+                mushroomFrames = greenMushroomFrames;
+            }
             const mushroomImg = new Image();
             mushroomImg.src = mushroomFrames[mushroom.frameIndex];
             return mushroomImg;
         }
+        
 
         function jump() {
             if (!soso.jumping) {
@@ -224,12 +237,19 @@
                 frameCounter: 0 
             };
 
-            if (mushrooms.length === 0 || (canvas.width - mushrooms[mushrooms.length - 1].x >= minDistance)) {
+            if (mushrooms.length === 0 || (canvasWidth - mushrooms[mushrooms.length - 1].x >= minDistance)) {
                 mushrooms.push(mushroom);
-                lastMushroomColor = lastMushroomColor === 'red' ? 'blue' : 'red';
-            }
 
-            setTimeout(generateMushrooms, 1000);  
+                // Cycle through red, blue, and green mushrooms
+                if (lastMushroomColor === 'red') {
+                    lastMushroomColor = 'blue';
+                } else if (lastMushroomColor === 'blue') {
+                    lastMushroomColor = 'green';
+                } else {
+                    lastMushroomColor = 'red';
+                }
+            }
+            setTimeout(generateMushrooms, 2000);  
         }
 
         function restartGame() {
